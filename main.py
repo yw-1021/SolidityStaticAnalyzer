@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Solidity 智能合约静态分析器
-支持单文件/工程扫描、Slither对比、交互式菜单
+支持单文件/工程扫描、Slither对比
 """
 import re
 import os

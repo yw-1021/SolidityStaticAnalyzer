@@ -2,7 +2,7 @@
 
 > **项目类型**: 密码学课程设计  
 > **功能**: 智能合约安全审计工具（支持工程级扫描 + 工具对比）  
-> **特色**: 交互式菜单 | 多文件扫描 | 单 HTML 输出 | Slither 对比
+> **特色**: 一键执行 | 多文件扫描 | 单 HTML 输出 | Slither 对比
 
 [![Python](https://img.shields.io/badge/Python-3.7%2B-blue)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
@@ -15,11 +15,10 @@
 
 ### ✨ 核心特性
 
-- ✅ **工程级扫描**: 支持单文件或整个项目目录扫描
-- ✅ **交互式菜单**: 友好的图形化菜单系统
+- ✅ **工程级扫描**: 自动递归扫描整个项目目录
+- ✅ **智能对比**: 自动分析并与 Slither 工具结果进行对比
 - ✅ **4 类漏洞检测**: 权限缺陷、危险调用、时间戳依赖、重入风险
 - ✅ **调用图分析**: Mermaid.js 流程图可视化
-- ✅ **Slither 对比**: 可选的专业工具对比分析
 - ✅ **单 HTML 输出**: 所有结果集成在一个美观的 HTML 报告中
 
 ---
@@ -33,54 +32,25 @@
 git clone https://github.com/yw-1021/SolidityStaticAnalyzer.git
 cd SolidityStaticAnalyzer
 
-# 可选：安装 Slither 以使用对比功能
-pip install slither-analyzer solc-select
+# 安装 Slither 以使用对比功能 (推荐)
+pip install slither-analyzer solc-select jinja2
 solc-select install 0.5.17
 solc-select use 0.5.17
 ```
 
 ### 使用方法
 
-#### 方式 1: 交互式菜单（推荐）
+**极简模式** - 无需任何配置，直接运行：
 
 ```bash
 python main.py
 ```
 
-将看到如下菜单：
+程序将自动执行以下流程：
 
-```
-============================================================
-    🛡️  Solidity 智能合约静态分析器 v3.0
-============================================================
-
-请选择功能：
-
-  [1] 仅扫描分析
-  [2] 扫描 + Slither 对比
-  [0] 退出程序
-------------------------------------------------------------
-请输入选项 [0-2]:
-```
-
-**选项说明**：
-
-- **[1] 仅扫描分析**: 快速扫描，生成基础审计报告
-- **[2] 扫描 + Slither 对比**: 运行 Slither 并生成对比分析（集成在 HTML 中）
-- **[0] 退出程序**: 退出
-
-#### 方式 2: 命令行模式
-
-```bash
-# 扫描单个文件
-python main.py samples/test_vuln.sol
-
-# 扫描整个项目目录
-python main.py ./contracts/
-
-# 扫描samples文件夹
-python main.py samples/
-```
+1. 扫描 `samples/` 目录下的所有合约
+2. 尝试运行 Slither 进行智能对比
+3. 生成 `audit_report.html` 报告
 
 ---
 
@@ -88,30 +58,7 @@ python main.py samples/
 
 ### 1. 工程级扫描
 
-**新特性**：自动递归查找所有 `.sol` 文件
-
-```bash
-# 假设你有如下项目结构：
-MyProject/
-  ├── contracts/
-  │   ├── Token.sol
-  │   ├── Vault.sol
-  │   └── governance/
-  │       └── Governor.sol
-  └── test/
-      └── Test.sol
-
-# 扫描整个 contracts 目录
-python main.py contracts/
-
-# 输出：
-# [*] 找到 3 个 Solidity 文件
-# [*] 开始扫描 3 个文件...
-#   ├─ 扫描: Token.sol
-#   ├─ 扫描: Vault.sol
-#   ├─ 扫描: Governor.sol
-#   └─ 完成！共发现 X 个风险项
-```
+**特性**：自动检测项目结构，如果存在 `samples/demo` 目录且主目录扫描失败（例如因外部依赖缺失），会自动智能降级扫描演示合约，确保产出有效报告。
 
 ### 2. 漏洞检测规则
 
@@ -131,31 +78,11 @@ audit_report.html
 ├── 📊 统计面板 (发现漏洞数、高危数等)
 ├── 🔍 漏洞详情表格 (按文件分类)
 ├── 📈 调用流程图 (Mermaid 可视化)
-└── 📊 Slither 对比章节 (可选，选择[2]时生成)
-    ├── 检测结果对比
-    ├── 共同检测到的问题
-    └── 工具优势分析
+└── 📊 Slither 对比章节 (含检测结果对比、共同问题验证)
 ```
 
-**不再生成的文件**：
-
-- ❌ `tool_comparison.md` (已集成到 HTML)
-- ❌ `slither_report.json` (直接使用，不保存)
-
-### 4. Slither 对比功能
-
-在菜单中选择 `[2]`，将自动：
-
-1. 运行自研工具扫描
-2. 调用 Slither 分析
-3. 对比两者结果
-4. 在 HTML 报告末尾生成对比章节
-
-**对比内容**：
-
-- 统计对比（检测数量、风险分布）
-- 共同检测到的问题
-- 各工具优势分析
+**对比功能说明**：
+程序会自动捕获 Slither 的输出（即使在未完全编译的情况下也能捕获部分结果），并将其整理为对比图表，展示自研工具在轻量级扫描方面的优势。
 
 ---
 
@@ -180,7 +107,7 @@ audit_report.html
 
 ```
 SolidityStaticAnalyzer/
-├── main.py                     # ⭐ 核心程序（交互式菜单 + 扫描引擎）
+├── main.py                     # ⭐ 核心程序（扫描引擎 + 报告生成）
 ├── audit_report.html           # 生成：统一的审计报告
 ├── README.md                   # 项目说明
 │
@@ -192,62 +119,30 @@ SolidityStaticAnalyzer/
         └── audit.yml           # CI 自动化配置
 ```
 
-**精简结构说明**：
-
-- ✅ 核心文件在根目录（`main.py`, `README.md`, `audit_report.html`）
-- ✅ 测试合约在 `samples/` 文件夹中
-- ✅ 所有结果集成在单一 HTML 文件中
-
 ---
 
 ## 💡 使用示例
 
-### 示例 1: 快速扫描测试合约
+**一键扫描示例**：
 
 ```bash
 $ python main.py
 
 ============================================================
-    🛡️  Solidity 智能合约静态分析器 v3.0
+    🛡️  Solidity 智能合约静态分析器
 ============================================================
 
-请选择功能：
-
-  [1] 仅扫描分析
-  [2] 扫描 + Slither 对比
-  [0] 退出程序
-
-请输入选项 [0-2]: 1
-
-请输入要扫描的文件或目录路径 (直接回车使用 test_vuln.sol): ↵
-
-[*] 开始扫描: test_vuln.sol...
-  ├─ 扫描: test_vuln.sol
-  └─ 完成！共发现 4 个风险项
-
-[Success] 报告生成完毕: E:\SolidityStaticAnalyzer\audit_report.html
-```
-
-### 示例 2: 扫描整个项目并对比
-
-```bash
-请输入选项 [0-2]: 2
-
-请输入要扫描的文件或目录路径: ./contracts/
-
-[*] 找到 5 个 Solidity 文件
-[*] 开始扫描 5 个文件...
-  ├─ 扫描: Token.sol
-  ├─ 扫描: Vault.sol
+[*] 开始扫描: samples/
+[*] 找到 7 个 Solidity 文件...
+  ├─ 扫描: LendingPool.sol
   ...
-  └─ 完成！共发现 12 个风险项
-
-是否运行 Slither 对比分析？(y/n，默认y): y↵
+  └─ 完成！共发现 9 个风险项
 
 [*] 运行 Slither 分析...
-  ✓ Slither 检测到 45 个问题
+  ✓ Slither 总计检测到 15 个问题
 
 [Success] 报告生成完毕: E:\SolidityStaticAnalyzer\audit_report.html
+[*] 处理完成！
 ```
 
 ---
