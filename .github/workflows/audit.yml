@@ -1,0 +1,41 @@
+name: Smart Contract Security Audit
+
+# 触发条件：当有代码 push 到 main 分支时
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  audit-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取代码
+      - uses: actions/checkout@v3
+
+      # 2. 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      # 3. 安装依赖
+      - name: Install Dependencies
+        run: |
+          pip install slither-analyzer solc-select
+          solc-select install 0.5.17
+          solc-select use 0.5.17
+
+      # 4. 运行审计脚本 (自动执行 scan + slither)
+      - name: Run Audit Tool
+        run: |
+          python main.py
+
+      # 5. 上传生成的 HTML 报告作为构建产物
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: audit-report
+          path: audit_report.html
