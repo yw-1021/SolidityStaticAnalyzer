@@ -33,17 +33,17 @@
             
             <div style="background: #e8f4fd; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 30px; border-radius: 4px;">
                 <p style="margin: 5px 0;"><strong>扫描目标：</strong> samples/</p>
-                <p style="margin: 5px 0;"><strong>扫描时间：</strong> 2025-12-31 12:17:09</p>
-                <p style="margin: 5px 0;"><strong>扫描文件数：</strong> 7 个</p>
+                <p style="margin: 5px 0;"><strong>扫描时间：</strong> 2025-12-31 13:28:25</p>
+                <p style="margin: 5px 0;"><strong>扫描文件数：</strong> 8 个</p>
             </div>
             
             <div class="stat-box">
                 <div class="stat">
-                    <h3>9</h3>
+                    <h3>18</h3>
                     <p>发现风险项</p>
                 </div>
                 <div class="stat" style="border-left-color: #e74c3c; background: #ffe8e8;">
-                    <h3 style="color: #e74c3c;">6</h3>
+                    <h3 style="color: #e74c3c;">15</h3>
                     <p>高危漏洞</p>
                 </div>
                 <div class="stat" style="border-left-color: #f39c12; background: #fff4e6;">
@@ -61,24 +61,46 @@
             <thead><tr><th>文件</th><th>等级</th><th>漏洞类型</th><th>位置</th><th>代码与建议</th></tr></thead>
             <tbody>
             <tr>
-                <td><span class="file-badge">Vault.sol</span></td>
+                <td><span class="file-badge">LendingPool.sol</span></td>
                 <td><span class="badge HIGH">HIGH</span></td>
-                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
-                <td>Line 39</td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 42</td>
                 <td>
-                    <code class="code-block">        (bool send, ) = msg.sender.call{value: _weiToWithdraw}("");</code>
-                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                    <code class="code-block">        USDaContract.transfer(address(LendingPoolContract), 10000 ether);</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">LendingPool.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 172</td>
+                <td>
+                    <code class="code-block">        require(USDa.transfer(borrower, amount), "Flashloan transfer failed");</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
                 </td>
             </tr>
             
             <tr>
                 <td><span class="file-badge">Vault.sol</span></td>
-                <td><span class="badge HIGH">HIGH</span></td>
-                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
+                <td><span class="badge CRITICAL">CRITICAL</span></td>
+                <td><strong>SWC-107</strong><br>重入攻击风险</td>
+                <td>Line 39</td>
+                <td>
+                    <code class="code-block">        (bool send, ) = msg.sender.call{value: _weiToWithdraw}("");</code>
+                    <small style="color: #e74c3c;">💡 遵循检查-生效-交互模式，或使用 ReentrancyGuard。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">Vault.sol</span></td>
+                <td><span class="badge CRITICAL">CRITICAL</span></td>
+                <td><strong>SWC-107</strong><br>重入攻击风险</td>
                 <td>Line 67</td>
                 <td>
                     <code class="code-block">        (bool send, ) = msg.sender.call{value: _weiToWithdraw}("");</code>
-                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                    <small style="color: #e74c3c;">💡 遵循检查-生效-交互模式，或使用 ReentrancyGuard。</small>
                 </td>
             </tr>
             
@@ -94,35 +116,112 @@
             </tr>
             
             <tr>
-                <td><span class="file-badge">StandaloneDemo.sol</span></td>
+                <td><span class="file-badge">Governor.sol</span></td>
                 <td><span class="badge HIGH">HIGH</span></td>
-                <td><strong>SWC-115</strong><br>权限控制缺陷 (tx.origin)</td>
-                <td>Line 19</td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 62</td>
                 <td>
-                    <code class="code-block">        require(tx.origin == owner, "Not owner");</code>
-                    <small style="color: #e74c3c;">💡 使用 msg.sender 替代。</small>
+                    <code class="code-block">        address(proxy).call(abi.encodeWithSignature("pwn()")); // exploit here</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
                 </td>
             </tr>
             
             <tr>
-                <td><span class="file-badge">StandaloneDemo.sol</span></td>
+                <td><span class="file-badge">PriceOracle.sol</span></td>
                 <td><span class="badge HIGH">HIGH</span></td>
-                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
-                <td>Line 28</td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 46</td>
                 <td>
-                    <code class="code-block">        msg.sender.call.value(_amount)("");</code>
-                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                    <code class="code-block">        USDbContract.transfer(address(SimpleBankContract), 9000 ether);</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
                 </td>
             </tr>
             
             <tr>
-                <td><span class="file-badge">StandaloneDemo.sol</span></td>
+                <td><span class="file-badge">PriceOracle.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 47</td>
+                <td>
+                    <code class="code-block">        USDaContract.transfer(address(SimplePoolContract), 1000 ether);</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">PriceOracle.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 48</td>
+                <td>
+                    <code class="code-block">        USDbContract.transfer(address(SimplePoolContract), 1000 ether);</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">PriceOracle.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 80</td>
+                <td>
+                    <code class="code-block">        USDaContract.transfer(address(SimplePoolContract), 500 ether);</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">PriceOracle.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 145</td>
+                <td>
+                    <code class="code-block">            USDaToken.transfer(borrower, amount),</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">PriceOracle.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 148</td>
+                <td>
+                    <code class="code-block">        (bool success, ) = borrower.call(data);</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">PriceOracle.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 175</td>
+                <td>
+                    <code class="code-block">            payoutToken.transfer(msg.sender, tokensToReceive),</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">DefiToken.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>未检查的低级调用</td>
+                <td>Line 147</td>
+                <td>
+                    <code class="code-block">        token.transfer(account, amount);</code>
+                    <small style="color: #e74c3c;">💡 检查返回值或使用 require 断言。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">Math.sol</span></td>
                 <td><span class="badge MEDIUM">MEDIUM</span></td>
-                <td><strong>SWC-116</strong><br>时间戳依赖</td>
-                <td>Line 36</td>
+                <td><strong>SWC-101</strong><br>整数溢出风险</td>
+                <td>Line 2</td>
                 <td>
-                    <code class="code-block">        if (block.timestamp % 2 == 0) {</code>
-                    <small style="color: #e74c3c;">💡 避免在关键逻辑依赖 block.timestamp。</small>
+                    <code class="code-block">pragma solidity ^0.7.6;</code>
+                    <small style="color: #e74c3c;">💡 使用 SafeMath 库或升级到 Solidity 0.8+。</small>
                 </td>
             </tr>
             
@@ -150,12 +249,12 @@
             
             <tr>
                 <td><span class="file-badge">Math.sol</span></td>
-                <td><span class="badge HIGH">HIGH</span></td>
-                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
+                <td><span class="badge CRITICAL">CRITICAL</span></td>
+                <td><strong>SWC-107</strong><br>重入攻击风险</td>
                 <td>Line 62</td>
                 <td>
                     <code class="code-block">        (bool sent, ) = msg.sender.call{value: amount}("");</code>
-                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                    <small style="color: #e74c3c;">💡 遵循检查-生效-交互模式，或使用 ReentrancyGuard。</small>
                 </td>
             </tr>
             </tbody></table>
@@ -164,27 +263,27 @@
                 <p style="color: #7f8c8d;">基于简易控制流分析生成的内部函数调用关系：</p>
                 <div class="mermaid">
                     graph TD;
-    N0["executeOperation"] --> N1["mint"];
-    N2["Attack"] --> N3["withdrawFunds"];
-    N4["testERC777Reentrancy"] --> N5["tokensReceived"];
-    N6["setUp"] --> N2["Attack"];
-    N7["flashLoan"] --> N0["executeOperation"];
-    N8["testOverflow"] --> N9["increaseLockTime"];
-    N10["testPrice_Manipulation"] --> N11["getPrice"];
-    N10["testPrice_Manipulation"] --> N12["exchange"];
-    N4["testERC777Reentrancy"] --> N1["mint"];
-    N13["testReentrancy"] --> N2["Attack"];
-    N12["exchange"] --> N11["getPrice"];
-    N14["GlobalFallback"] --> N15["pwn"];
-    N16["test_RevertRemediated"] --> N2["Attack"];
-    N17["testDelegatecall"] --> N15["pwn"];
-    N18["testFlashLoanSecure"] --> N7["flashLoan"];
-    N10["testPrice_Manipulation"] --> N7["flashLoan"];
-    N8["testOverflow"] --> N19["withdraw"];
-    N10["testPrice_Manipulation"] --> N1["mint"];
-    N4["testERC777Reentrancy"] --> N20["claim"];
-    N5["tokensReceived"] --> N20["claim"];
-    N21["testFlashLoanFlaw"] --> N7["flashLoan"];
+    N0["testERC777Reentrancy"] --> N1["claim"];
+    N2["tokensReceived"] --> N1["claim"];
+    N3["testReentrancy"] --> N4["Attack"];
+    N5["testPrice_Manipulation"] --> N6["exchange"];
+    N0["testERC777Reentrancy"] --> N2["tokensReceived"];
+    N7["flashLoan"] --> N8["executeOperation"];
+    N9["testOverflow"] --> N10["withdraw"];
+    N11["test_RevertRemediated"] --> N4["Attack"];
+    N0["testERC777Reentrancy"] --> N12["mint"];
+    N9["testOverflow"] --> N13["increaseLockTime"];
+    N5["testPrice_Manipulation"] --> N12["mint"];
+    N4["Attack"] --> N14["withdrawFunds"];
+    N15["testFlashLoanFlaw"] --> N7["flashLoan"];
+    N16["setUp"] --> N4["Attack"];
+    N17["GlobalFallback"] --> N18["pwn"];
+    N19["testFlashLoanSecure"] --> N7["flashLoan"];
+    N5["testPrice_Manipulation"] --> N7["flashLoan"];
+    N5["testPrice_Manipulation"] --> N20["getPrice"];
+    N21["testDelegatecall"] --> N18["pwn"];
+    N6["exchange"] --> N20["getPrice"];
+    N8["executeOperation"] --> N12["mint"];
 
                 </div>
             </div>
@@ -197,19 +296,19 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
             <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #3498db;">
                 <h3 style="margin-top: 0; color: #3498db;">自研工具</h3>
-                <p style="font-size: 2em; font-weight: bold; margin: 10px 0;">9</p>
+                <p style="font-size: 2em; font-weight: bold; margin: 10px 0;">18</p>
                 <p style="color: #7f8c8d;">检测到的安全漏洞</p>
                 <div style="margin-top: 15px; font-size: 0.9em;">
-<div>• CRITICAL: 1 个</div><div>• HIGH: 5 个</div><div>• MEDIUM: 3 个</div>
+<div>• CRITICAL: 4 个</div><div>• HIGH: 11 个</div><div>• MEDIUM: 3 个</div>
                 </div>
             </div>
             
             <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #e74c3c;">
                 <h3 style="margin-top: 0; color: #e74c3c;">Slither</h3>
-                <p style="font-size: 2em; font-weight: bold; margin: 10px 0;">15</p>
+                <p style="font-size: 2em; font-weight: bold; margin: 10px 0;">41</p>
                 <p style="color: #7f8c8d;">检测到的所有问题</p>
                 <div style="margin-top: 15px; font-size: 0.9em;">
-<div>• High: 4 个</div><div>• Medium: 3 个</div><div>• Low: 2 个</div><div>• Informational: 6 个</div>
+<div>• High: 12 个</div><div>• Medium: 10 个</div><div>• Low: 7 个</div><div>• Informational: 11 个</div>
                 </div>
             </div>
         </div>
@@ -217,7 +316,7 @@
         <div style="background: #fffdf9; padding: 20px; border-radius: 8px; border: 1px solid #ffeaa7; margin-top: 20px;">
             <h3 style="color: #2c3e50;">🔍 共同检测到的问题</h3>
             <ul style="line-height: 1.8;">
-<li>✅ <strong>权限控制缺陷 (tx.origin)</strong> - 两者都检测到</li><li>✅ <strong>危险的外部调用 (delegatecall)</strong> - 两者都检测到</li><li>✅ <strong>时间戳依赖</strong> - 两者都检测到</li><li>✅ <strong>低级调用/潜在重入</strong> - 两者都检测到</li>
+<li>✅ <strong>危险的外部调用 (delegatecall)</strong> - 两者都检测到</li><li>✅ <strong>时间戳依赖</strong> - 两者都检测到</li><li>✅ <strong>低级调用/潜在重入</strong> - 两者都检测到</li>
             </ul>
         </div>
         
@@ -247,7 +346,7 @@
     </div>
 
             <div style="text-align:center; margin-top:50px; color:#aaa; font-size:0.9em; padding-top: 30px; border-top: 1px solid #eee;">
-                Solidity 静态分析器 v3.0 | 生成时间: 2025-12-31 12:17:09
+                Solidity 静态分析器 | 生成时间: 2025-12-31 13:28:25
             </div>
         </div>
     </body>

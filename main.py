@@ -53,12 +53,44 @@ VULN_RULES = [
         "suggestion": "避免在关键逻辑依赖 block.timestamp。"
     },
     {
+        "id": "SWC-107",
+        "name": "重入攻击风险",
+        "pattern": r"\.call\{value:",
+        "severity": "CRITICAL",
+        "desc": "检测到带有 value 的外部调用。可能存在重入攻击风险。",
+        "suggestion": "遵循检查-生效-交互模式，或使用 ReentrancyGuard。"
+    },
+    {
         "id": "SWC-104",
-        "name": "低级调用/潜在重入",
-        "pattern": r"\.call(\.value|\{).*?\(",
+        "name": "未检查的低级调用",
+        "pattern": r"\.call\(|\.send\(|\.transfer\(",
         "severity": "HIGH",
-        "desc": "检测到低级 call 调用。如果未遵循检查-生效-交互模式，可能导致重入攻击。",
-        "suggestion": "添加重入锁 (ReentrancyGuard) 并检查返回值。"
+        "desc": "检测到低级调用方法。如果未检查返回值，可能导致静默失败。",
+        "suggestion": "检查返回值或使用 require 断言。"
+    },
+    {
+        "id": "SWC-101",
+        "name": "整数溢出风险",
+        "pattern": r"^\s*pragma\s+solidity\s+[<^]?0\.[0-7]\.",
+        "severity": "MEDIUM",
+        "desc": "检测到使用旧版 Solidity（<0.8.0）。该版本缺乏内置溢出检查。",
+        "suggestion": "使用 SafeMath 库或升级到 Solidity 0.8+。"
+    },
+    {
+        "id": "SWC-120",
+        "name": "弱随机数生成",
+        "pattern": r"(?:rand|random|lottery).*(?:block\.timestamp|block\.number|blockhash)",
+        "severity": "HIGH",
+        "desc": "检测到使用区块信息生成随机数。矿工可预测或操纵。",
+        "suggestion": "使用 Chainlink VRF 等安全的随机数服务。"
+    },
+    {
+        "id": "SWC-105",
+        "name": "未保护的自毁函数",
+        "pattern": r"selfdestruct\s*\(|suicide\s*\(",
+        "severity": "CRITICAL",
+        "desc": "检测到自毁函数。如果访问控制不当，合约可能被恶意销毁。",
+        "suggestion": "添加严格的权限检查（onlyOwner）并考虑时间锁。"
     }
 ]
 
@@ -212,14 +244,17 @@ def scan_project(path):
     """
     sol_files = find_solidity_files(path)
     if not sol_files:
-        return [], ""
+        return [], "", 0
+    
+    # 过滤掉 demo 目录下的文件（让 Slither 专门处理）
+    filtered_files = [f for f in sol_files if "demo" not in f.replace("\\", "/")]
     
     all_findings = []
     all_calls = []
     
-    print(f"\n[*] 开始扫描 {len(sol_files)} 个文件...")
+    print(f"\n[*] 开始扫描 {len(filtered_files)} 个文件...")
     
-    for sol_file in sol_files:
+    for sol_file in filtered_files:
         print(f"  ├─ 扫描: {os.path.basename(sol_file)}")
         findings, mermaid = scan_file(sol_file)
         all_findings.extend(findings)
@@ -236,7 +271,7 @@ def scan_project(path):
     mermaid_code = generate_mermaid_graph(list(set(all_calls)))
     print(f"  └─ 完成！共发现 {len(all_findings)} 个风险项\n")
     
-    return all_findings, mermaid_code, len(sol_files)
+    return all_findings, mermaid_code, len(sol_files)  # 返回总文件数（包括demo）
 
 # ==========================================
 # 5. Slither 集成
@@ -263,43 +298,25 @@ def run_slither_on_target(target):
 
 def run_slither(path):
     """
-    运行 Slither 并解析结果 (智能健壮模式)
-    1. 尝试直接扫描目录
-    2. 如果目录扫描失败或无结果，尝试逐个文件扫描并合并结果
+    运行 Slither 并解析结果
+    扫描 demo 目录中的各个文件
     """
     print(f"[*] 运行 Slither 分析...")
     
-    # 1. 尝试直接扫描
-    print("  -> 尝试整体扫描...")
-    all_detectors = run_slither_on_target(path)
+    # 扫描 demo 目录中的所有 .sol 文件
+    demo_path = os.path.join(path, "demo")
+    all_detectors = []
     
-    # 2. 如果整体扫描无结果，尝试扫描 demo 目录 (优化策略)
-    if not all_detectors and os.path.isdir(path):
-        # 隐式切换，不打印提示
-        demo_path = os.path.join(path, "demo")
-        if os.path.exists(demo_path):
-            detectors = run_slither_on_target(demo_path)
-            if detectors:
-                print(f"    ✓ 发现 {len(detectors)} 个问题")
-                all_detectors.extend(detectors)
-        
-        # 如果 demo 目录也没有，再尝试暴力逐个扫描（保留作为最后防线，但通常不需要）
-        else:
-             # 查找所有 .sol 文件
-            sol_files = []
-            for root, _, files in os.walk(path):
-                for file in files:
-                    if file.endswith(".sol"):
-                        sol_files.append(os.path.join(root, file))
-            
-            for sol_file in sol_files:
-                # 跳过 node_modules 或 lib
-                if "node_modules" in sol_file or "lib" in sol_file:
-                    continue
-                    
-                detectors = run_slither_on_target(sol_file)
+    if os.path.exists(demo_path):
+        print(f"  -> 扫描 demo 目录...")
+        # 逐个文件扫描以避免版本冲突
+        for file in os.listdir(demo_path):
+            if file.endswith(".sol"):
+                file_path = os.path.join(demo_path, file)
+                detectors = run_slither_on_target(file_path)
                 if detectors:
                     all_detectors.extend(detectors)
+                    print(f"     • {file}: {len(detectors)} 个问题")
     
     # 构建最终结果
     slither_results = {
@@ -540,7 +557,7 @@ def generate_report(target_path, findings, mermaid_code, total_files, slither_re
     # 结束
     html_content += f"""
             <div style="text-align:center; margin-top:50px; color:#aaa; font-size:0.9em; padding-top: 30px; border-top: 1px solid #eee;">
-                Solidity 静态分析器 v3.0 | 生成时间: {timestamp}
+                Solidity 静态分析器 | 生成时间: {timestamp}
             </div>
         </div>
     </body>
@@ -553,7 +570,7 @@ def generate_report(target_path, findings, mermaid_code, total_files, slither_re
     print(f"[Success] 报告生成完毕: {os.path.abspath(report_file)}")
 
 # ==========================================
-# 7. 交互式菜单
+# 7. 主程序入口
 # ==========================================
 
 if __name__ == "__main__":

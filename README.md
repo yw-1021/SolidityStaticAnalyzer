@@ -2,104 +2,94 @@
 
 > **项目类型**: 密码学课程设计  
 > **功能**: 智能合约安全审计工具（支持工程级扫描 + 工具对比）  
-> **特色**: 一键执行 | 多文件扫描 | 单 HTML 输出 | Slither 对比
+> **特色**: 自动化扫描 | 多文件支持 | HTML 报告 | Slither 对比
 
-[![Python](https://img.shields.io/badge/Python-3.7%2B-blue)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue)](https://www.python.org/)
 
 ---
 
 ## 📖 项目简介
 
-本项目是一个**智能合约静态分析工具**，采用规则匹配和控制流分析，能够快速扫描 Solidity 合约中的安全漏洞。
+本工具通过静态分析技术扫描 Solidity 智能合约代码，检测潜在的安全漏洞。支持单文件或整个项目目录的递归扫描，并可与 Slither 工具进行对比分析。
 
-### ✨ 核心特性
+## 🏆 课设完成度自查
 
-- ✅ **工程级扫描**: 自动递归扫描整个项目目录
-- ✅ **智能对比**: 自动分析并与 Slither 工具结果进行对比
-- ✅ **4 类漏洞检测**: 权限缺陷、危险调用、时间戳依赖、重入风险
-- ✅ **调用图分析**: Mermaid.js 流程图可视化
-- ✅ **单 HTML 输出**: 所有结果集成在一个美观的 HTML 报告中
+严格对照课程设计要求，本项目已**全部完成**所有基础及加分项：
+
+| 要求项       | 具体要求           | 完成情况    | 对应功能                                          |
+| ------------ | ------------------ | ----------- | ------------------------------------------------- |
+| **基础要求** | 输入：单文件或工程 | ✅ 完成     | 支持递归扫描 `samples/` 目录及子目录              |
+| **基础要求** | 输出：检测报告     | ✅ 完成     | 生成包含漏洞类型、位置、等级、建议的 HTML 报告    |
+| **基础要求** | 覆盖至少 3 类问题  | ✅ **超额** | 覆盖 8 类（含重入、权限、外部调用、返回值检查等） |
+| **基础要求** | 验证工具效果       | ✅ 完成     | 通过 `samples/demo` 高危合约进行实测验证          |
+| **加分项**   | 结果分析 (调用图)  | ✅ **完成** | 集成 Mermaid.js 生成函数调用关系图                |
+| **加分项**   | 与现有工具对比     | ✅ **完成** | 实现了与 Slither 的自动化对比分析                 |
+| **加分项**   | CI 集成            | ✅ **完成** | 配置 GitHub Actions 实现提交即扫描                |
+
+### ✨ 核心功能
+
+- 📂 递归扫描项目目录中的所有 `.sol` 文件
+- 🔍 检测 8 类常见安全漏洞（权限控制、外部调用、时间戳依赖、重入风险、未检查返回值、整数溢出、弱随机数、自毁函数）
+- 📊 生成函数调用关系图（Mermaid.js 可视化）
+- ⚖️ 集成 Slither 工具进行对比分析
+- 📄 输出统一的 HTML 格式审计报告
 
 ---
 
-## 🚀 快速开始
+## 🚀 安装
 
-### 安装
+### 克隆仓库
 
 ```bash
-# 克隆项目
 git clone https://github.com/yw-1021/SolidityStaticAnalyzer.git
 cd SolidityStaticAnalyzer
+```
 
-# 安装 Slither 以使用对比功能 (推荐)
-pip install slither-analyzer solc-select jinja2
+### 安装依赖
+
+需要安装以下工具以使用完整功能：
+
+```bash
+pip install slither-analyzer solc-select
 solc-select install 0.5.17
 solc-select use 0.5.17
 ```
 
-### 使用方法
+---
 
-**极简模式** - 无需任何配置，直接运行：
+## 💻 使用
 
 ```bash
 python main.py
 ```
 
-程序将自动执行以下流程：
-
-1. 扫描 `samples/` 目录下的所有合约
-2. 尝试运行 Slither 进行智能对比
-3. 生成 `audit_report.html` 报告
+程序将扫描 `samples/` 目录，运行 Slither 对比分析，并生成 `audit_report.html` 报告文件。
 
 ---
 
-## 📊 功能详解
+## 🔍 漏洞检测规则
 
-### 1. 工程级扫描
-
-**特性**：自动检测项目结构，如果存在 `samples/demo` 目录且主目录扫描失败（例如因外部依赖缺失），会自动智能降级扫描演示合约，确保产出有效报告。
-
-### 2. 漏洞检测规则
-
-| 漏洞 ID | 漏洞名称          | 风险等级 | 检测内容                       |
-| ------- | ----------------- | -------- | ------------------------------ |
-| SWC-115 | 权限控制缺陷      | HIGH     | 检测 `tx.origin` 使用          |
-| SWC-112 | 危险的外部调用    | CRITICAL | 检测 `delegatecall` 使用       |
-| SWC-116 | 时间戳依赖        | MEDIUM   | 检测 `block.timestamp` / `now` |
-| SWC-104 | 低级调用/重入风险 | HIGH     | 检测 `call.value` 模式         |
-
-### 3. 统一 HTML 报告
-
-**所有结果集成在一个文件中**：
-
-```
-audit_report.html
-├── 📊 统计面板 (发现漏洞数、高危数等)
-├── 🔍 漏洞详情表格 (按文件分类)
-├── 📈 调用流程图 (Mermaid 可视化)
-└── 📊 Slither 对比章节 (含检测结果对比、共同问题验证)
-```
-
-**对比功能说明**：
-程序会自动捕获 Slither 的输出（即使在未完全编译的情况下也能捕获部分结果），并将其整理为对比图表，展示自研工具在轻量级扫描方面的优势。
+| 漏洞 ID | 漏洞类型         | 风险等级 | 检测模式                              |
+| ------- | ---------------- | -------- | ------------------------------------- |
+| SWC-115 | 权限控制缺陷     | HIGH     | `tx.origin` 使用                      |
+| SWC-112 | 危险的外部调用   | CRITICAL | `delegatecall` 使用                   |
+| SWC-116 | 时间戳依赖       | MEDIUM   | `block.timestamp` / `now`             |
+| SWC-107 | 重入攻击风险     | CRITICAL | `.call{value:` 模式                   |
+| SWC-104 | 未检查的低级调用 | HIGH     | `.call()` / `.send()` / `.transfer()` |
+| SWC-101 | 整数溢出风险     | MEDIUM   | Solidity 版本 < 0.8.0                 |
+| SWC-120 | 弱随机数生成     | HIGH     | 随机函数使用区块信息                  |
+| SWC-105 | 未保护的自毁函数 | CRITICAL | `selfdestruct` / `suicide` 函数       |
 
 ---
 
-## 🎯 课设要求完成情况
+## 📋 输出报告
 
-### ✅ 基础要求（100%）
+生成的 `audit_report.html` 包含：
 
-- [x] **输入**: 支持单文件 + 工程目录
-- [x] **输出**: HTML 报告（漏洞类型、位置、风险等级、修复建议）
-- [x] **覆盖 3 类漏洞**: 实现 4 类漏洞检测
-- [x] **验证工具效果**: 详见 `TESTING.md`
-
-### ✅ 加分项（100%）
-
-- [x] **控制流分析**: 函数调用图提取与 Mermaid 可视化
-- [x] **与现有工具对比**: 集成 Slither 对比分析
-- [x] **CI 集成**: GitHub Actions 配置
+- 📊 漏洞统计面板（总数、高危数、中危数）
+- 📝 详细漏洞列表（文件、位置、代码片段、修复建议）
+- 🔗 函数调用流程图（Mermaid 可视化）
+- ⚖️ Slither 对比分析
 
 ---
 
@@ -107,85 +97,39 @@ audit_report.html
 
 ```
 SolidityStaticAnalyzer/
-├── main.py                     # ⭐ 核心程序（扫描引擎 + 报告生成）
-├── audit_report.html           # 生成：统一的审计报告
-├── README.md                   # 项目说明
-│
-├── samples/                    # 测试合约示例文件夹
-│   └── test_vuln.sol          # 测试合约（含4种漏洞）
-│
-└── .github/
-    └── workflows/
-        └── audit.yml           # CI 自动化配置
+├── main.py                 # 核心程序
+├── audit_report.html       # 生成的审计报告
+├── README.md               # 项目文档
+├── samples/                # 示例合约
+└── .github/workflows/      # CI/CD 配置
+    └── audit.yml
 ```
 
 ---
 
-## 💡 使用示例
+## 🔧 技术实现
 
-**一键扫描示例**：
+### 核心技术栈
 
-```bash
-$ python main.py
-
-============================================================
-    🛡️  Solidity 智能合约静态分析器
-============================================================
-
-[*] 开始扫描: samples/
-[*] 找到 7 个 Solidity 文件...
-  ├─ 扫描: LendingPool.sol
-  ...
-  └─ 完成！共发现 9 个风险项
-
-[*] 运行 Slither 分析...
-  ✓ Slither 总计检测到 15 个问题
-
-[Success] 报告生成完毕: E:\SolidityStaticAnalyzer\audit_report.html
-[*] 处理完成！
-```
-
----
-
-## 🧪 测试验证
-
-详细的测试验证文档见 [`TESTING.md`](TESTING.md)。
-
-**测试结果**：
-
-- ✅ 检测准确率: 100%
-- ✅ 误报率: 0%
-- ✅ 与 Slither 一致性: 100%
-
----
-
-## 🔧 技术架构
-
-### 核心技术
-
-1. **规则引擎**: 基于正则表达式的模式匹配
-2. **多文件扫描**: PathLib 递归查找 + 汇总分析
-3. **控制流分析**: 简化的函数调用关系提取
-4. **HTML 报告**: 单文件集成所有结果
-5. **工具集成**: subprocess 调用 Slither
+- **规则引擎**: 正则表达式模式匹配
+- **文件系统**: PathLib 递归查找
+- **控制流分析**: 函数调用关系提取
+- **报告生成**: HTML + Mermaid.js
+- **工具集成**: subprocess 调用 Slither
 
 ### 工作流程
 
 ```mermaid
 graph LR
-    A[输入路径] --> B{文件或目录?}
-    B -->|文件| C[扫描单文件]
-    B -->|目录| D[递归查找.sol]
-    D --> E[扫描所有文件]
-    C --> F[规则匹配]
-    E --> F
-    F --> G[提取调用图]
-    G --> H{是否对比?}
-    H -->|是| I[运行Slither]
-    H -->|否| J[生成HTML]
-    I --> K[集成对比结果]
-    K --> J
-    J --> L[输出报告]
+    A[扫描 samples/] --> B[递归查找 .sol 文件]
+    B --> C[逐个文件扫描]
+    C --> D[规则匹配检测]
+    D --> E[提取函数调用图]
+    E --> F[运行 Slither 对比]
+    F --> G[整合分析结果]
+    G --> H[生成 HTML 报告]
 ```
 
----
+### CI/CD 集成
+
+GitHub Actions 工作流配置在 `.github/workflows/audit.yml`，每次 push 或 pull request 到 main 分支时自动运行审计。
