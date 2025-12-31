@@ -1,0 +1,255 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>智能合约安全审计报告</title>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+        <script>mermaid.initialize({startOnLoad:true});</script>
+        <style>
+            body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; color: #333; padding: 20px; margin: 0; }
+            .container { max-width: 1200px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+            h1, h2 { color: #2c3e50; border-bottom: 2px solid #f1f2f6; padding-bottom: 10px; }
+            .stat-box { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+            .stat { flex: 1; min-width: 200px; background: #e8f4fd; padding: 20px; border-radius: 8px; text-align: center; border-left: 5px solid #3498db; }
+            .stat h3 { margin: 0; font-size: 2em; color: #3498db; }
+            .stat p { margin: 5px 0 0 0; color: #7f8c8d; }
+            .vuln-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            .vuln-table th, .vuln-table td { border: 1px solid #eee; padding: 12px; text-align: left; }
+            .vuln-table th { background: #f8f9fa; font-weight: 600; }
+            .badge { padding: 4px 8px; border-radius: 4px; color: white; font-size: 0.85em; font-weight: bold; display: inline-block; }
+            .CRITICAL { background: #d63031; } 
+            .HIGH { background: #e17055; } 
+            .MEDIUM { background: #fdcb6e; color: #333; }
+            .LOW { background: #55efc4; color: #333; }
+            .code-block { background: #2d3436; color: #dfe6e9; padding: 8px 12px; border-radius: 4px; font-family: 'Consolas', monospace; display: block; margin: 5px 0; overflow-x: auto; }
+            .graph-section { margin-top: 40px; padding: 20px; background: #fffdf9; border: 1px solid #ffeaa7; border-radius: 8px; }
+            .file-badge { background: #74b9ff; color: white; padding: 2px 8px; border-radius: 3px; font-size: 0.85em; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🛡️ 智能合约安全审计报告</h1>
+            
+            <div style="background: #e8f4fd; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 30px; border-radius: 4px;">
+                <p style="margin: 5px 0;"><strong>扫描目标：</strong> samples/</p>
+                <p style="margin: 5px 0;"><strong>扫描时间：</strong> 2025-12-31 12:17:09</p>
+                <p style="margin: 5px 0;"><strong>扫描文件数：</strong> 7 个</p>
+            </div>
+            
+            <div class="stat-box">
+                <div class="stat">
+                    <h3>9</h3>
+                    <p>发现风险项</p>
+                </div>
+                <div class="stat" style="border-left-color: #e74c3c; background: #ffe8e8;">
+                    <h3 style="color: #e74c3c;">6</h3>
+                    <p>高危漏洞</p>
+                </div>
+                <div class="stat" style="border-left-color: #f39c12; background: #fff4e6;">
+                    <h3 style="color: #f39c12;">3</h3>
+                    <p>中危漏洞</p>
+                </div>
+                <div class="stat" style="border-left-color: #2ecc71; background: #eafaf1;">
+                    <h3 style="color: #2ecc71;">Pass</h3>
+                    <p>静态语法检查</p>
+                </div>
+            </div>
+
+            <h2>🔍 漏洞详情</h2>
+    <table class="vuln-table">
+            <thead><tr><th>文件</th><th>等级</th><th>漏洞类型</th><th>位置</th><th>代码与建议</th></tr></thead>
+            <tbody>
+            <tr>
+                <td><span class="file-badge">Vault.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
+                <td>Line 39</td>
+                <td>
+                    <code class="code-block">        (bool send, ) = msg.sender.call{value: _weiToWithdraw}("");</code>
+                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">Vault.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
+                <td>Line 67</td>
+                <td>
+                    <code class="code-block">        (bool send, ) = msg.sender.call{value: _weiToWithdraw}("");</code>
+                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">Governor.sol</span></td>
+                <td><span class="badge CRITICAL">CRITICAL</span></td>
+                <td><strong>SWC-112</strong><br>危险的外部调用 (Delegatecall)</td>
+                <td>Line 38</td>
+                <td>
+                    <code class="code-block">        (bool suc, ) = address(delegate).delegatecall(msg.data); // vulnerable</code>
+                    <small style="color: #e74c3c;">💡 确保目标地址可信，或改用 call。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">StandaloneDemo.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-115</strong><br>权限控制缺陷 (tx.origin)</td>
+                <td>Line 19</td>
+                <td>
+                    <code class="code-block">        require(tx.origin == owner, "Not owner");</code>
+                    <small style="color: #e74c3c;">💡 使用 msg.sender 替代。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">StandaloneDemo.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
+                <td>Line 28</td>
+                <td>
+                    <code class="code-block">        msg.sender.call.value(_amount)("");</code>
+                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">StandaloneDemo.sol</span></td>
+                <td><span class="badge MEDIUM">MEDIUM</span></td>
+                <td><strong>SWC-116</strong><br>时间戳依赖</td>
+                <td>Line 36</td>
+                <td>
+                    <code class="code-block">        if (block.timestamp % 2 == 0) {</code>
+                    <small style="color: #e74c3c;">💡 避免在关键逻辑依赖 block.timestamp。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">Math.sol</span></td>
+                <td><span class="badge MEDIUM">MEDIUM</span></td>
+                <td><strong>SWC-116</strong><br>时间戳依赖</td>
+                <td>Line 45</td>
+                <td>
+                    <code class="code-block">        lockTime[msg.sender] = block.timestamp + 1 weeks;</code>
+                    <small style="color: #e74c3c;">💡 避免在关键逻辑依赖 block.timestamp。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">Math.sol</span></td>
+                <td><span class="badge MEDIUM">MEDIUM</span></td>
+                <td><strong>SWC-116</strong><br>时间戳依赖</td>
+                <td>Line 55</td>
+                <td>
+                    <code class="code-block">            block.timestamp > lockTime[msg.sender],</code>
+                    <small style="color: #e74c3c;">💡 避免在关键逻辑依赖 block.timestamp。</small>
+                </td>
+            </tr>
+            
+            <tr>
+                <td><span class="file-badge">Math.sol</span></td>
+                <td><span class="badge HIGH">HIGH</span></td>
+                <td><strong>SWC-104</strong><br>低级调用/潜在重入</td>
+                <td>Line 62</td>
+                <td>
+                    <code class="code-block">        (bool sent, ) = msg.sender.call{value: amount}("");</code>
+                    <small style="color: #e74c3c;">💡 添加重入锁 (ReentrancyGuard) 并检查返回值。</small>
+                </td>
+            </tr>
+            </tbody></table>
+            <div class="graph-section">
+                <h2>📊 函数调用流程图</h2>
+                <p style="color: #7f8c8d;">基于简易控制流分析生成的内部函数调用关系：</p>
+                <div class="mermaid">
+                    graph TD;
+    N0["executeOperation"] --> N1["mint"];
+    N2["Attack"] --> N3["withdrawFunds"];
+    N4["testERC777Reentrancy"] --> N5["tokensReceived"];
+    N6["setUp"] --> N2["Attack"];
+    N7["flashLoan"] --> N0["executeOperation"];
+    N8["testOverflow"] --> N9["increaseLockTime"];
+    N10["testPrice_Manipulation"] --> N11["getPrice"];
+    N10["testPrice_Manipulation"] --> N12["exchange"];
+    N4["testERC777Reentrancy"] --> N1["mint"];
+    N13["testReentrancy"] --> N2["Attack"];
+    N12["exchange"] --> N11["getPrice"];
+    N14["GlobalFallback"] --> N15["pwn"];
+    N16["test_RevertRemediated"] --> N2["Attack"];
+    N17["testDelegatecall"] --> N15["pwn"];
+    N18["testFlashLoanSecure"] --> N7["flashLoan"];
+    N10["testPrice_Manipulation"] --> N7["flashLoan"];
+    N8["testOverflow"] --> N19["withdraw"];
+    N10["testPrice_Manipulation"] --> N1["mint"];
+    N4["testERC777Reentrancy"] --> N20["claim"];
+    N5["tokensReceived"] --> N20["claim"];
+    N21["testFlashLoanFlaw"] --> N7["flashLoan"];
+
+                </div>
+            </div>
+    
+    <div style="margin-top: 50px; padding: 30px; background: #f8f9fa; border-radius: 8px;">
+        <h2 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
+            📊 与 Slither 工具对比分析
+        </h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #3498db;">
+                <h3 style="margin-top: 0; color: #3498db;">自研工具</h3>
+                <p style="font-size: 2em; font-weight: bold; margin: 10px 0;">9</p>
+                <p style="color: #7f8c8d;">检测到的安全漏洞</p>
+                <div style="margin-top: 15px; font-size: 0.9em;">
+<div>• CRITICAL: 1 个</div><div>• HIGH: 5 个</div><div>• MEDIUM: 3 个</div>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; border-left: 5px solid #e74c3c;">
+                <h3 style="margin-top: 0; color: #e74c3c;">Slither</h3>
+                <p style="font-size: 2em; font-weight: bold; margin: 10px 0;">15</p>
+                <p style="color: #7f8c8d;">检测到的所有问题</p>
+                <div style="margin-top: 15px; font-size: 0.9em;">
+<div>• High: 4 个</div><div>• Medium: 3 个</div><div>• Low: 2 个</div><div>• Informational: 6 个</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: #fffdf9; padding: 20px; border-radius: 8px; border: 1px solid #ffeaa7; margin-top: 20px;">
+            <h3 style="color: #2c3e50;">🔍 共同检测到的问题</h3>
+            <ul style="line-height: 1.8;">
+<li>✅ <strong>权限控制缺陷 (tx.origin)</strong> - 两者都检测到</li><li>✅ <strong>危险的外部调用 (delegatecall)</strong> - 两者都检测到</li><li>✅ <strong>时间戳依赖</strong> - 两者都检测到</li><li>✅ <strong>低级调用/潜在重入</strong> - 两者都检测到</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <h3 style="color: #2c3e50;">💡 工具对比总结</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4 style="color: #27ae60;">自研工具优势</h4>
+                    <ul style="line-height: 1.8; font-size: 0.95em;">
+                        <li>轻量级，运行速度快</li>
+                        <li>专注高危安全漏洞</li>
+                        <li>易于定制和扩展</li>
+                        <li>报告简洁直观</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #e74c3c;">Slither 优势</h4>
+                    <ul style="line-height: 1.8; font-size: 0.95em;">
+                        <li>专业商业级工具</li>
+                        <li>检测规则更全面（100+）</li>
+                        <li>基于 AST 深度分析</li>
+                        <li>覆盖代码质量优化</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+            <div style="text-align:center; margin-top:50px; color:#aaa; font-size:0.9em; padding-top: 30px; border-top: 1px solid #eee;">
+                Solidity 静态分析器 v3.0 | 生成时间: 2025-12-31 12:17:09
+            </div>
+        </div>
+    </body>
+    </html>
+    
